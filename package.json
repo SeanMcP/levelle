@@ -4,17 +4,25 @@
     "description": "📖 Automagically level reading books",
     "main": "index.html",
     "scripts": {
+        "build": "parcel build index.html",
+        "dev": "parcel index.html",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/SeanMcP/levelle.git"
     },
-    "keywords": [],
-    "author": "",
+    "author": {
+        "email": "mail@seanmcp.com",
+        "name": "Sean McPherson",
+        "url": "https://seanmcp.com"
+    },
     "license": "ISC",
     "bugs": {
         "url": "https://github.com/SeanMcP/levelle/issues"
     },
-    "homepage": "https://github.com/SeanMcP/levelle#readme"
+    "homepage": "https://github.com/SeanMcP/levelle#readme",
+    "devDependencies": {
+        "parcel-bundler": "^1.12.4"
+    }
 }
