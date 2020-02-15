@@ -10,9 +10,9 @@
     const video = document.getElementById('videoRef')
     const errors = document.getElementById('errorsRef')
 
-    document.getElementById('startButton').addEventListener('click', startStream)
-    document.getElementById('stopButton').addEventListener('click', stopStream)
-    document.getElementById('pictureButton').addEventListener('click', takePicture)
+    document.getElementById('startButtonRef').addEventListener('click', startStream)
+    document.getElementById('stopButtonRef').addEventListener('click', stopStream)
+    document.getElementById('pictureButtonRef').addEventListener('click', takePicture)
 
     function logError(err) {
         console.error(err)

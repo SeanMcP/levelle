@@ -1,35 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Levelle</title>
-        <link rel="stylesheet" href="./styles.css" />
-        <script src='https://unpkg.com/tesseract.js@v2.0.2/dist/tesseract.min.js'></script>
-    </head>
-    <body>
-        <section class="section">
-            <div class="container">
-                <h1 class="title">
-                    Levelle
-                </h1>
-                <p class="subtitle">
-                    Automagically level reading books
-                </p>
-            </div>
-            <div class="container">
-                <h2>Scan</h2>
-                <video id="videoRef" autoplay height="400px"></video>
-                <div>
-                    <button id="startButton">Start</button>
-                    <button id="stopButton">Stop</button>
-                    <button id="pictureButton">Take Picture</button>
-                </div>
-                <canvas id="canvasRef" hidden></canvas>
-                <img src="" alt="" id="photoRef">
-            </div>
-            <pre id="errorsRef"></pre>
-        </section>
-        <script src="./levelle.js"></script>
-    </body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Levelle</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/tesseract.js@v2.0.2/dist/tesseract.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>
+        Levelle
+      </h1>
+      <p>
+        Automagically level reading books
+      </p>
+    </header>
+    <main>
+      <div class="container">
+        <h2>Scan</h2>
+        <video id="videoRef" autoplay height="400px"></video>
+        <div>
+          <button id="startButtonRef">Start</button>
+          <button id="stopButtonRef">Stop</button>
+          <button id="pictureButtonRef">Take Picture</button>
+        </div>
+        <canvas id="canvasRef" hidden></canvas>
+        <img src="" alt="" id="photoRef" />
+      </div>
+      <pre id="errorsRef"></pre>
+    </main>
+    <script src="./levelle.js"></script>
+  </body>
 </html>
