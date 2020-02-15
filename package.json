@@ -24,5 +24,8 @@
     "homepage": "https://github.com/SeanMcP/levelle#readme",
     "devDependencies": {
         "parcel-bundler": "^1.12.4"
+    },
+    "dependencies": {
+        "tesseract.js": "^2.0.2"
     }
 }
