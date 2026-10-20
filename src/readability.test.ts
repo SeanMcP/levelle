@@ -7,11 +7,11 @@ const EARLY_READER =
     'The cat and the dog play. We like to play too. Look at the cat go. The dog is fun.'
 
 const CHAPTER_BOOK =
-    'Wilbur did not want food, he wanted love. He wanted a friend, someone who would play with him. ' +
-    'He mentioned this to the goose, who was sitting quietly in a corner of the sheepfold. ' +
-    'The goose said that she could not play because she was sitting on her eggs. ' +
-    'Wilbur walked slowly to the barn door and looked out at the gray sky. ' +
-    'It was still raining, and the rain made long puddles in the yard.'
+    'Nora did not want breakfast, she wanted an adventure. She wanted someone who would explore the woods with her. ' +
+    'She asked her brother, who was reading quietly in a corner of the porch. ' +
+    'He said that he could not come because he was finishing his book. ' +
+    'Nora walked slowly to the garden gate and looked up at the gray sky. ' +
+    'It was still raining, and the rain made long puddles in the lane.'
 
 const ACADEMIC =
     'The constitutional framework established a deliberately complicated separation of governmental ' +
