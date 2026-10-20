@@ -3,3 +3,10 @@ dist/
 
 # Copied from node_modules by scripts/copy-ocr-assets.js
 public/ocr/
+
+# OCR benchmark output
+bench/out/
+
+# Benchmark photos and transcriptions are of copyrighted books; keep them local
+data/*
+!data/README.md

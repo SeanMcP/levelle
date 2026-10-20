@@ -47,81 +47,132 @@ preprocessing. Try it with an English recognition model and WebGPU.
 
 ## Photo preprocessing
 
-### Benchmark
+### Benchmark (`pnpm bench`)
 
-Synthetic "phone photos" were rendered in headless Chrome: a page of text with
-CSS 3D perspective tilt, rotation, a shadow gradient toward the spine, blur,
-JPEG compression, and the facing page visible at the edge. Images were
-3000×3999, about the size of a 12 MP photo. Three difficulty levels: `clean`,
-`mild`, `phone`. Scoring:
+**Trust the real scans, not the synthetic images.** The first rounds of
+testing used synthetic photos and a single pasted (downscaled) photo with
+corners placed to the pixel. They overstated accuracy: the version that scored
+0–12% word error rate on those got **38%** on a real full-resolution scan.
 
-- **Recall:** the longest common subsequence of OCR words and true words,
-  divided by the true word count.
-- **Junk:** OCR words that don't match any true word.
+`bench/run.js` runs the app's own image code (`src/image.ts`,
+`src/dewarp.ts`) and Tesseract in headless Chrome:
 
-### Results on the hardest (`phone`) image
+- **Inputs:** each photo in `bench/cases.js`, with corners where a reader
+  would drag them.
+- **Variants:** several processing variants per photo.
+- **Output:** a score for each. The straightened images and text are saved to
+  `bench/out/` for inspection.
+- **Running it:** `pnpm bench` runs everything; `pnpm bench app-dewarp
+  raw-psm3` runs only the named variants. Set `CHROME_PATH` if Chrome isn't in
+  the default macOS location.
 
-| Approach | Recall | Junk |
-|---|---|---|
-| Original app (downscale to 2000 px, grayscale, contrast) | 0.85 | 34 |
-| Full resolution | 0.77 | 60 |
-| Full resolution + Sauvola thresholding | 0.52 | 153 |
-| Rectangular crop | 0.64 | 16 |
-| Rectangular crop + page segmentation mode 6 (single block) | 0.76 | 8 |
-| Lighting correction, whole image, full resolution | 0.89 | 21 |
-| PaddleOCR, whole image | 0.92 | 27 |
-| **Four-corner crop + perspective correction + lighting correction** | **1.00** | **0** |
+**Scoring**, after lowercasing, removing apostrophes and rejoining
+line-break hyphens:
 
-### Takeaways from the synthetic images
+- **WER:** word error rate, the word-level edit distance divided by the
+  transcription's word count. Lower is better; it counts junk words too.
+- **Recall:** matched words (longest common subsequence) divided by the
+  transcription's word count.
 
-- **Uneven lighting and perspective are what break Tesseract.** Resolution
-  doesn't matter much: 2000 px was as good as or better than full size.
-- **Tesseract's thresholding options are unreliable on photos.**
-  `thresholding_method` 1 (Leptonica local normalize) and 2 (Sauvola) were
-  often worse than the default Otsu, and results swung widely between images.
-- **Rectangular cropping removes junk from the facing page** but doesn't fix
-  angled text lines.
-- **Corrections are needed together.** Perspective correction alone gave 0.82;
-  lighting correction alone gave 0.89 or worse. Together they gave 1.00.
-- **Corner placement can be sloppy, as long as it stays outside the text.**
-  Corners with a loose margin, or on the page corners, gave 1.00. Corners that
-  cut into the text dropped to 0.84–0.92.
+**Dataset** (`data/`):
 
-### Real photo
+- **Photos:** real full-resolution phone photos (3472×4624) of an open
+  paperback, C. S. Lewis's *The Four Loves*.
+- **Kept local:** the photos and transcriptions are of a copyrighted book, so
+  they aren't committed (`data/README.md` explains how to add your own). A
+  shareable set would need public-domain books.
+- **Transcriptions:** the `.txt` files are hand transcriptions. `<...>` marks
+  text that can't be seen, such as under a thumb, and is skipped.
+- **Known typos:**
+  - `scan-2.txt`: "intented" and "banners";
+  - `scan-3.txt`: "use" for "us";
+  - `scan-4.txt`: "into other" for "into the other", "fiend" ×2 for "friend",
+    "expect" for "except".
 
-**The photo:** an open paperback (C. S. Lewis, *The Four Loves*, p. 55) taken
-on a phone. It's 1558×2074 after pasting, so probably downscaled from the
-camera original. Problems in the shot:
+  They cost every variant the same few words, so comparisons are unaffected.
+- **Common problems in the photos:** page curl into the spine, the facing page
+  visible, and a thumb in frame.
 
-- **Page curl:** strong curl into the gutter, so lines bow upward on the left.
-- **Facing page:** visible down the left edge.
-- **Thumb:** covering part of the last lines.
+### Results on real scans (word error rate)
 
-The ground truth is a manual transcription of the visible text, 253 words.
+Scored on the text after `src/text.ts` cleanup, which is what readers see.
 
-| Approach | Recall | Junk |
-|---|---|---|
-| Original app | 0.59 | 142 |
-| Lighting correction, whole image | 0.69 | 186 |
-| Four corners + perspective + lighting (page segmentation mode 3) | 0.89 | 29 |
-| Four corners + perspective, no lighting correction | 0.91 | 22 |
-| **Four corners + perspective + lighting (page segmentation mode 6)** | **0.91** | **18** |
-| Same, dropping lines with confidence < 75 | 0.78 | 3 |
+| Variant | Scan 1 | Scan 2 | Scan 3 | Scan 4 |
+|---|---|---|---|---|
+| Raw photo, Tesseract defaults (psm 3) | 52% | 81% | 57% | 26% |
+| Corners + perspective + lighting (shipped before dewarp) | 8% | 11% | 38% | 21% |
+| **+ dewarp (current app)** | **1%** | **6%** | **1%** | **6%** |
+| + dewarp, corners ~4% looser | 1% | 5% | 10% | 8% |
+| + dewarp, corners never moved (default 8% inset) | 14% | 16% | 20% | 24% |
 
-- **The four-corner workflow is the big win on real photos too.** It
-  recovered 59% → 91% of words, and junk fell from 142 to 18.
-- **Page curl causes nearly all the remaining errors.** They're in the
-  top-left lines, which bend into the spine. A homography only fixes flat
-  perspective, so dewarping curled pages is the next accuracy step.
-- **Lighting correction mattered little here** because the light was fairly
-  even. Keep it: it was decisive on the shadowed synthetic photo and costs
-  little.
-- **Page segmentation mode 6** (`SINGLE_BLOCK`) matched or beat the default
-  mode 3 on every test image, and was ~10% faster. The app now uses it.
-- **Dropping low-confidence lines trades away too much real text** to be a
-  default. It might work as an option.
-- **Level of this passage:** grade 8.9, Z, 1010L–1185L. The formulas ranged
-  from 6.2 (ARI) to 11.2 (Fog).
+**About the scan 4 score:** most of its 6% comes from transcription slips,
+not OCR. The OCR text is correct where the transcription has "into other
+loves" (for "into the other loves"), "fiend" ×2 (for "friend") and "expect"
+(for "except"). Its one real error at the start is "door" for "floor" in the
+steeply curled first line.
+
+### Takeaways
+
+- **Page curl is the main failure on real photos.** Even after perspective
+  correction, lines near the spine and the top of the page bow by more than a
+  line height. In single-block mode Tesseract then splices neighbouring lines
+  together. Scan 3 lost almost its whole top half this way. Dewarping fixed it
+  (38% → 1%).
+- **Corners matter.** Leaving the default corners pulls in the facing page's
+  text, giving 14–24% word error rate. Loose but sensible placement is fine.
+  Auto-detecting the text block would remove this failure mode.
+- **The steeply curled first line** still fails sometimes (scan 2's first
+  line; "door" for "floor" in scan 4).
+- **Single-character slips** ("1s" for "is") are fixed by `src/text.ts`.
+- **Raw OCR of a whole phone photo is unusable** (52–82% word error rate). The
+  preprocessing does the heavy lifting.
+
+### Dewarping (`src/dewarp.ts`)
+
+Perspective correction handles a flat page seen at an angle. Dewarping
+handles the bend that remains:
+
+1. **Strips:** cut the straightened page into 16 vertical strips.
+2. **Profiles:** in each strip, sum the ink in each row. This gives a profile
+   with a peak per text line.
+3. **Line spacing:** estimate it from the autocorrelation of the middle of the
+   page.
+4. **Drift between strips:** for each of 10 overlapping horizontal bands, find
+   the vertical shift that best aligns neighbouring strips' profiles. The
+   search is limited to ±0.45 × line spacing, so lines can't be matched to the
+   wrong neighbour. Blank bands are filled by interpolation.
+5. **Offsets:** chain the drifts outward from the middle strip to get an
+   offset for every strip and band.
+6. **Remap:** interpolate those offsets bilinearly and shift each column
+   vertically.
+
+It adds a few hundred milliseconds and needs no extra data.
+
+### Early synthetic tests
+
+Before real scans were available, synthetic "phone photos" were rendered in
+headless Chrome: CSS 3D tilt, a shadow gradient toward the spine, blur, JPEG
+compression, and a facing page.
+
+They taught some real lessons:
+
+- Lighting and perspective, not resolution, break Tesseract.
+- Tesseract's Sauvola and local-normalize thresholding (`thresholding_method`
+  2 and 1) are worse than the default Otsu on photos.
+- Lighting correction and perspective correction work best together.
+
+But they had no page curl, camera noise or paper texture, so their near-perfect
+scores didn't carry over to real photos. Treat any result from synthetic images
+as an upper bound.
+
+Other findings from that phase:
+
+- **Single block mode:** page segmentation mode 6 (`SINGLE_BLOCK`) matched or
+  beat the default mode 3 and was ~10% faster.
+- **Confidence filtering:** dropping lines with confidence < 75 removed junk
+  but also too much real text (recall 0.91 → 0.78).
+- **PaddleOCR:** recovered 92% of words on a synthetic photo, versus 85% for
+  unprocessed Tesseract. See the engine notes above for why we didn't switch.
 
 ### Orientation
 
@@ -139,7 +190,7 @@ The ground truth is a manual transcription of the visible text, 253 words.
   cheaper heuristic: OCR a small center crop at 0° and 90° and keep the one
   with higher confidence.
 
-### What the app does now (`src/image.ts`, `src/ocr.ts`)
+### What the app does now (`src/image.ts`, `src/dewarp.ts`, `src/ocr.ts`, `src/text.ts`)
 
 1. Decode the photo, honoring its EXIF orientation, and downscale it so its
    longest side is at most 3000 px. The user can rotate it in 90° steps.
@@ -147,25 +198,27 @@ The ground truth is a manual transcription of the visible text, 253 words.
 3. Perspective-warp that quad to an upright 2000 px-wide grayscale image,
    using a homography with bilinear sampling.
 4. Even out the lighting: divide each pixel by the mean of a box about 3% of
-   the image size around it, using a summed-area table. This removes shadows
-   and gradients but keeps text dark.
-5. Run Tesseract with Otsu thresholding (the default) and page segmentation
+   the image size around it, using a summed-area table.
+5. Dewarp curled lines (see above).
+6. Run Tesseract with Otsu thresholding (the default) and page segmentation
    mode 6 (single block).
-6. Clean up the text: strip `|` and `[]` artifacts from page edges, rejoin
-   hyphenated words, and unwrap hard line breaks.
+7. Clean up the text:
+   - strip page-edge junk (`| \ [ ] © …`) from line ends;
+   - fix `1` read for a lowercase `i`;
+   - rejoin hyphenated words and unwrap hard line breaks.
 
 ### Ideas not yet tried
 
-- Auto-detect the page corners (edge detection plus largest-quadrilateral
-  search) so the user only has to adjust them.
-- **Correct page curl near the spine.** This is the biggest remaining source
-  of errors on real photos (see above). Options:
-  - Let the user drag midpoints on the top and bottom edges, then warp in
-    strips.
-  - Fit curves to the detected text lines and dewarp along them.
-- **Benchmark more real phone photos at full camera resolution.**
-  Different books, lighting and fonts, including children's picture books
-  with large type.
+- **Auto-detect the text block or page corners** and start the handles there.
+  Untouched default corners are now the biggest source of error (14–24%).
+- **Steeper curl:** the first lines of scans 2 and 4 still fail. Possible fixes:
+  - more strips near the spine;
+  - fitting a smooth curve to each line, not piecewise shifts.
+- **More real photos:** other books, lighting and fonts, especially children's
+  books with large type and illustrations, which may confuse the line
+  profiles.
+- **PaddleOCR with an English model:** revisit, measured with `pnpm bench` on
+  the real scans.
 
 ## Reading levels
 
