@@ -124,3 +124,27 @@ export function flattenLighting(image: ImageData, radiusFraction = 0.03): ImageD
 
     return out
 }
+
+/** Decodes a photo (honoring its EXIF orientation) into a canvas no larger than `maxSide` */
+export async function loadPhoto(file: Blob, maxSide: number): Promise<HTMLCanvasElement> {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bitmap.width * scale)
+    canvas.height = Math.round(bitmap.height * scale)
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    return canvas
+}
+
+/** Returns a copy of the canvas turned 90° clockwise */
+export function rotateClockwise(source: HTMLCanvasElement): HTMLCanvasElement {
+    const canvas = document.createElement('canvas')
+    canvas.width = source.height
+    canvas.height = source.width
+    const context = canvas.getContext('2d')!
+    context.translate(canvas.width, 0)
+    context.rotate(Math.PI / 2)
+    context.drawImage(source, 0, 0)
+    return canvas
+}

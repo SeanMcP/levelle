@@ -26,13 +26,18 @@
 
                 <div id="preview" hidden>
                     <p class="hint">
-                        Drag the four corners around the passage. Leave a little space around the
-                        text; the page edges work well.
+                        If the text is sideways, rotate the photo. Then drag the four corners around
+                        the passage, leaving a little space around the text; the page edges work well.
                     </p>
                     <figure class="photo">
                         <img id="preview-image" alt="The photographed page" />
                     </figure>
-                    <button id="read-button" class="button primary" type="button">Read text</button>
+                    <div class="actions">
+                        <button id="rotate-button" class="button secondary" type="button">
+                            <span aria-hidden="true">↻</span> Rotate
+                        </button>
+                        <button id="read-button" class="button primary" type="button">Read text</button>
+                    </div>
                 </div>
 
                 <div id="progress" class="progress" hidden>

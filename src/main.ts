@@ -1,5 +1,6 @@
 import './styles.css'
 import { CornerEditor } from './corners'
+import { loadPhoto, rotateClockwise } from './image'
 import { recognize, warmUp } from './ocr'
 import { formatGrade, level } from './readability'
 
@@ -9,6 +10,7 @@ const photoInput = $<HTMLInputElement>('photo-input')
 const preview = $<HTMLElement>('preview')
 const previewImage = $<HTMLImageElement>('preview-image')
 const readButton = $<HTMLButtonElement>('read-button')
+const rotateButton = $<HTMLButtonElement>('rotate-button')
 const progress = $<HTMLElement>('progress')
 const progressBar = $<HTMLProgressElement>('progress-bar')
 const progressLabel = $<HTMLElement>('progress-label')
@@ -43,25 +45,50 @@ function unwrapLines(text: string): string {
         .join('\n\n')
 }
 
-const corners = new CornerEditor(previewImage)
-let photo: File | null = null
+/** Longest side of the photo we work from; phone cameras are often 4000px+ */
+const PHOTO_MAX = 3000
 
-photoInput.addEventListener('change', () => {
+const corners = new CornerEditor(previewImage)
+let photo: HTMLCanvasElement | null = null
+
+function showPhoto(canvas: HTMLCanvasElement) {
+    photo = canvas
+    canvas.toBlob(
+        (blob) => {
+            if (!blob) return
+            URL.revokeObjectURL(previewImage.src)
+            previewImage.src = URL.createObjectURL(blob)
+        },
+        'image/jpeg',
+        0.9,
+    )
+}
+
+photoInput.addEventListener('change', async () => {
     const file = photoInput.files?.[0]
     photoInput.value = ''
     if (!file) return
 
-    photo = file
-    URL.revokeObjectURL(previewImage.src)
-    previewImage.src = URL.createObjectURL(file)
-    preview.hidden = false
-    progress.hidden = true
-    preview.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    try {
+        showPhoto(await loadPhoto(file, PHOTO_MAX))
+        preview.hidden = false
+        progress.hidden = true
+        preview.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch (error) {
+        console.error(error)
+        showProgress('', 0)
+        progressLabel.textContent = 'Sorry, that photo could not be opened.'
+    }
+})
+
+// Phones often guess the orientation wrong when pointed straight down at a book
+rotateButton.addEventListener('click', () => {
+    if (photo) showPhoto(rotateClockwise(photo))
 })
 
 readButton.addEventListener('click', async () => {
     if (!photo) return
-    readButton.disabled = true
+    readButton.disabled = rotateButton.disabled = true
     showProgress('', 0)
 
     try {
@@ -78,7 +105,7 @@ readButton.addEventListener('click', async () => {
         console.error(error)
         progressLabel.textContent = 'Sorry, the page could not be read. Please try again.'
     } finally {
-        readButton.disabled = false
+        readButton.disabled = rotateButton.disabled = false
     }
 })
 

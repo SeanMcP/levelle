@@ -8,8 +8,6 @@ import { flattenLighting, warp, type Quad } from './image'
 
 export type ProgressHandler = (status: string, progress: number) => void
 
-/** Longest side of the photo we work from; phone cameras are often 4000px+ */
-const SOURCE_MAX = 3000
 /** Width of the straightened passage handed to Tesseract */
 const OUTPUT_WIDTH = 2000
 
@@ -43,21 +41,11 @@ export function warmUp(): void {
 }
 
 /** Straightens the selected corners and evens out the lighting */
-async function prepare(image: Blob, corners: Quad): Promise<HTMLCanvasElement> {
-    const bitmap = await createImageBitmap(image)
-    const scale = Math.min(1, SOURCE_MAX / Math.max(bitmap.width, bitmap.height))
-    const width = Math.round(bitmap.width * scale)
-    const height = Math.round(bitmap.height * scale)
-
-    const source = document.createElement('canvas')
-    source.width = width
-    source.height = height
-    const sourceContext = source.getContext('2d', { willReadFrequently: true })!
-    sourceContext.drawImage(bitmap, 0, 0, width, height)
-    bitmap.close()
-
+function prepare(photo: HTMLCanvasElement, corners: Quad): HTMLCanvasElement {
+    const { width, height } = photo
+    const source = photo.getContext('2d')!.getImageData(0, 0, width, height)
     const quad = corners.map(([x, y]) => [x * width, y * height]) as Quad
-    const cleaned = flattenLighting(warp(sourceContext.getImageData(0, 0, width, height), quad, OUTPUT_WIDTH))
+    const cleaned = flattenLighting(warp(source, quad, OUTPUT_WIDTH))
 
     const canvas = document.createElement('canvas')
     canvas.width = cleaned.width
@@ -66,11 +54,18 @@ async function prepare(image: Blob, corners: Quad): Promise<HTMLCanvasElement> {
     return canvas
 }
 
-export async function recognize(image: Blob, corners: Quad, progress: ProgressHandler = () => {}): Promise<string> {
+/** Reads the text inside `corners` (fractions of the photo's size) */
+export async function recognize(
+    photo: HTMLCanvasElement,
+    corners: Quad,
+    progress: ProgressHandler = () => {},
+): Promise<string> {
     onProgress = progress
     try {
         progress('preparing image', 0)
-        const canvas = await prepare(image, corners)
+        // Let the progress label paint before the synchronous image work
+        await new Promise(requestAnimationFrame)
+        const canvas = prepare(photo, corners)
         const worker = await getWorker()
         const { data } = await worker.recognize(canvas)
         return data.text

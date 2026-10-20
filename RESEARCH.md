@@ -123,9 +123,26 @@ The ground truth is a manual transcription of the visible text, 253 words.
 - **Level of this passage:** grade 8.9, Z, 1010L–1185L. The formulas ranged
   from 6.2 (ARI) to 11.2 (Fog).
 
+### Orientation
+
+- **Phones often save book photos sideways.** Pointing the camera straight
+  down at a flat book confuses the orientation sensor. Tesseract fails
+  completely on sideways text: the same real photo rotated 90° recovered 3% of
+  words with 223 junk, against 90% upright.
+- **The app has a Rotate button** that turns the photo 90° clockwise.
+- **One canvas for preview and OCR.** The photo is decoded once into a
+  canvas, with `createImageBitmap(file, { imageOrientation: 'from-image' })`
+  so EXIF orientation is applied. The preview and OCR both use that canvas,
+  so what the user sees is always what gets read.
+- **Possible improvement:** detect orientation automatically. Tesseract's OSD
+  needs `osd.traineddata` and the legacy engine, which would add size. A
+  cheaper heuristic: OCR a small center crop at 0° and 90° and keep the one
+  with higher confidence.
+
 ### What the app does now (`src/image.ts`, `src/ocr.ts`)
 
-1. Downscale the photo so its longest side is at most 3000 px.
+1. Decode the photo, honoring its EXIF orientation, and downscale it so its
+   longest side is at most 3000 px. The user can rotate it in 90° steps.
 2. The user drags four corners around the passage (`src/corners.ts`).
 3. Perspective-warp that quad to an upright 2000 px-wide grayscale image,
    using a homography with bilinear sampling.
