@@ -22,11 +22,18 @@
                     Take or choose a photo
                 </label>
                 <input id="photo-input" type="file" accept="image/*" capture="environment" hidden />
-                <p class="hint">Hold the book flat in good light with one page filling the frame.</p>
+                <p class="hint">Hold the book flat in bright, even light, with the page filling the frame.</p>
 
-                <figure id="preview" hidden>
-                    <img id="preview-image" alt="The photographed page" />
-                </figure>
+                <div id="preview" hidden>
+                    <p class="hint">
+                        Drag the four corners around the passage. Leave a little space around the
+                        text; the page edges work well.
+                    </p>
+                    <figure class="photo">
+                        <img id="preview-image" alt="The photographed page" />
+                    </figure>
+                    <button id="read-button" class="button primary" type="button">Read text</button>
+                </div>
 
                 <div id="progress" class="progress" hidden>
                     <progress id="progress-bar" max="1"></progress>
