@@ -1,34 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Levelle</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <header>
-      <h1>
-        Levelle
-      </h1>
-      <p>
-        Automagically level reading books
-      </p>
-    </header>
-    <main>
-      <div class="container">
-        <h2>Scan</h2>
-        <video id="videoRef" autoplay height="400px"></video>
-        <div>
-          <button id="startButtonRef">Start</button>
-          <button id="stopButtonRef">Stop</button>
-          <button id="pictureButtonRef">Take Picture</button>
-        </div>
-        <canvas id="canvasRef" hidden></canvas>
-        <img src="" alt="" id="photoRef" />
-      </div>
-      <pre id="errorsRef"></pre>
-    </main>
-    <script src="./levelle.js"></script>
-  </body>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Automagically level reading books" />
+        <meta name="theme-color" content="#2f5d50" />
+        <title>Levelle</title>
+        <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+        <link rel="manifest" href="./manifest.webmanifest" />
+    </head>
+    <body>
+        <header class="masthead">
+            <h1>📖 Levelle</h1>
+            <p>Snap a page, get a reading level. Everything stays on your device.</p>
+        </header>
+
+        <main>
+            <section class="card" aria-labelledby="scan-heading">
+                <h2 id="scan-heading"><span class="step">1</span> Capture a passage</h2>
+                <label class="button primary" for="photo-input">
+                    Take or choose a photo
+                </label>
+                <input id="photo-input" type="file" accept="image/*" capture="environment" hidden />
+                <p class="hint">Hold the book flat in good light with one page filling the frame.</p>
+
+                <figure id="preview" hidden>
+                    <img id="preview-image" alt="The photographed page" />
+                </figure>
+
+                <div id="progress" class="progress" hidden>
+                    <progress id="progress-bar" max="1"></progress>
+                    <span id="progress-label">Starting…</span>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="text-heading">
+                <h2 id="text-heading"><span class="step">2</span> Check the text</h2>
+                <p class="hint">Fix any scanning mistakes, or type or paste a passage here.</p>
+                <textarea id="text" rows="8" placeholder="The recognized text will appear here…"></textarea>
+            </section>
+
+            <section class="card" aria-labelledby="result-heading" aria-live="polite">
+                <h2 id="result-heading"><span class="step">3</span> Reading level</h2>
+                <p id="empty" class="hint">Add a passage to see its level.</p>
+
+                <div id="result" hidden>
+                    <dl class="scales">
+                        <div class="scale main">
+                            <dt>Grade level</dt>
+                            <dd id="grade"></dd>
+                        </div>
+                        <div class="scale">
+                            <dt>Guided Reading <abbr title="Approximate">≈</abbr></dt>
+                            <dd id="guided"></dd>
+                        </div>
+                        <div class="scale">
+                            <dt>Lexile <abbr title="Approximate">≈</abbr></dt>
+                            <dd id="lexile"></dd>
+                        </div>
+                    </dl>
+
+                    <ul id="warnings" class="warnings"></ul>
+
+                    <details>
+                        <summary>How this was calculated</summary>
+                        <table>
+                            <thead>
+                                <tr><th scope="col">Formula</th><th scope="col">Grade</th></tr>
+                            </thead>
+                            <tbody id="formulas"></tbody>
+                        </table>
+                        <p id="stats" class="hint"></p>
+                        <p class="hint">
+                            The grade level is the median of the formulas that apply to this
+                            passage. Guided Reading and Lexile values are estimated from the grade
+                            using published correlation charts. They are not official levels.
+                        </p>
+                    </details>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <span id="offline-status">Preparing offline mode…</span>
+        </footer>
+
+        <script type="module" src="./src/main.ts"></script>
+    </body>
 </html>
