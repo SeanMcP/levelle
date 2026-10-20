@@ -1,4 +1,5 @@
 import './styles.css'
+import { CornerEditor } from './corners'
 import { recognize, warmUp } from './ocr'
 import { formatGrade, level } from './readability'
 
@@ -7,6 +8,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const photoInput = $<HTMLInputElement>('photo-input')
 const preview = $<HTMLElement>('preview')
 const previewImage = $<HTMLImageElement>('preview-image')
+const readButton = $<HTMLButtonElement>('read-button')
 const progress = $<HTMLElement>('progress')
 const progressBar = $<HTMLProgressElement>('progress-bar')
 const progressLabel = $<HTMLElement>('progress-label')
@@ -16,6 +18,7 @@ const result = $<HTMLElement>('result')
 const offlineStatus = $<HTMLElement>('offline-status')
 
 const STATUS_LABELS: Record<string, string> = {
+    'preparing image': 'Straightening the page…',
     'loading tesseract core': 'Loading scanner…',
     'initializing tesseract': 'Loading scanner…',
     'loading language traineddata': 'Loading English…',
@@ -32,23 +35,37 @@ function showProgress(status: string, value: number) {
 /** Join OCR's hard-wrapped lines back into paragraphs */
 function unwrapLines(text: string): string {
     return text
+        // Page edges and the book's gutter read as stray bars at the ends of lines
+        .replace(/^[ \t|\[\]]+|[ \t|\[\]]+$/gm, '')
         .trim()
         .split(/\n\s*\n/)
         .map((paragraph) => paragraph.replace(/(\w)-\n(\w)/g, '$1$2').replace(/\s*\n\s*/g, ' '))
         .join('\n\n')
 }
 
-photoInput.addEventListener('change', async () => {
+const corners = new CornerEditor(previewImage)
+let photo: File | null = null
+
+photoInput.addEventListener('change', () => {
     const file = photoInput.files?.[0]
+    photoInput.value = ''
     if (!file) return
 
+    photo = file
     URL.revokeObjectURL(previewImage.src)
     previewImage.src = URL.createObjectURL(file)
     preview.hidden = false
+    progress.hidden = true
+    preview.scrollIntoView({ behavior: 'smooth', block: 'start' })
+})
+
+readButton.addEventListener('click', async () => {
+    if (!photo) return
+    readButton.disabled = true
     showProgress('', 0)
 
     try {
-        const text = await recognize(file, showProgress)
+        const text = await recognize(photo, corners.quad, showProgress)
         textInput.value = unwrapLines(text)
         render()
         if (!text.trim()) {
@@ -56,11 +73,12 @@ photoInput.addEventListener('change', async () => {
             return
         }
         progress.hidden = true
+        textInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
     } catch (error) {
         console.error(error)
         progressLabel.textContent = 'Sorry, the page could not be read. Please try again.'
     } finally {
-        photoInput.value = ''
+        readButton.disabled = false
     }
 })
 
