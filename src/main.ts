@@ -3,6 +3,7 @@ import { CornerEditor } from './corners'
 import { loadPhoto, rotateClockwise } from './image'
 import { recognize, warmUp } from './ocr'
 import { formatGrade, level } from './readability'
+import { cleanOcrText } from './text'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 
@@ -32,17 +33,6 @@ function showProgress(status: string, value: number) {
     progress.hidden = false
     progressBar.value = value
     progressLabel.textContent = STATUS_LABELS[status] ?? 'Working…'
-}
-
-/** Join OCR's hard-wrapped lines back into paragraphs */
-function unwrapLines(text: string): string {
-    return text
-        // Page edges and the book's gutter read as stray bars at the ends of lines
-        .replace(/^[ \t|\[\]]+|[ \t|\[\]]+$/gm, '')
-        .trim()
-        .split(/\n\s*\n/)
-        .map((paragraph) => paragraph.replace(/(\w)-\n(\w)/g, '$1$2').replace(/\s*\n\s*/g, ' '))
-        .join('\n\n')
 }
 
 /** Longest side of the photo we work from; phone cameras are often 4000px+ */
@@ -93,7 +83,7 @@ readButton.addEventListener('click', async () => {
 
     try {
         const text = await recognize(photo, corners.quad, showProgress)
-        textInput.value = unwrapLines(text)
+        textInput.value = cleanOcrText(text)
         render()
         if (!text.trim()) {
             progressLabel.textContent = 'No text found. Try a closer, sharper photo.'

@@ -4,6 +4,7 @@
 // The rest of the app only uses `recognize`, so the engine can be swapped
 // (e.g. for PaddleOCR on ONNX Runtime Web) without touching anything else.
 import { createWorker, PSM, type Worker } from 'tesseract.js'
+import { dewarp } from './dewarp'
 import { flattenLighting, warp, type Quad } from './image'
 
 export type ProgressHandler = (status: string, progress: number) => void
@@ -40,12 +41,12 @@ export function warmUp(): void {
     getWorker().catch((error) => console.warn('OCR warm-up failed', error))
 }
 
-/** Straightens the selected corners and evens out the lighting */
+/** Straightens the selected corners, evens out the lighting and uncurls the lines */
 function prepare(photo: HTMLCanvasElement, corners: Quad): HTMLCanvasElement {
     const { width, height } = photo
     const source = photo.getContext('2d')!.getImageData(0, 0, width, height)
     const quad = corners.map(([x, y]) => [x * width, y * height]) as Quad
-    const cleaned = flattenLighting(warp(source, quad, OUTPUT_WIDTH))
+    const cleaned = dewarp(flattenLighting(warp(source, quad, OUTPUT_WIDTH)))
 
     const canvas = document.createElement('canvas')
     canvas.width = cleaned.width
