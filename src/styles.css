@@ -148,6 +148,8 @@ summary:focus-visible {
     max-width: 100%;
     max-height: 70vh;
     border-radius: 8px;
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
 .corners {
@@ -156,6 +158,10 @@ summary:focus-visible {
     width: 100%;
     height: 100%;
     overflow: visible;
+    /* Drags on the photo must never scroll the page */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .corners polygon {
@@ -164,12 +170,31 @@ summary:focus-visible {
     stroke-width: var(--stroke);
 }
 
-.corners .handle {
-    fill: rgb(255 255 255 / 0.35);
+.corners .handle circle {
+    fill: rgb(255 255 255 / 0.25);
     stroke: var(--accent);
     stroke-width: calc(var(--stroke) * 1.5);
-    cursor: grab;
-    touch-action: none;
+}
+
+.corners .handle .dot {
+    fill: var(--accent);
+    stroke: none;
+}
+
+.corners .handle.active circle:not(.dot) {
+    fill: rgb(255 255 255 / 0.1);
+    stroke-width: calc(var(--stroke) * 2);
+}
+
+.loupe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .progress {
