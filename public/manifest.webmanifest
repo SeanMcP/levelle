@@ -1,0 +1,11 @@
+{
+    "name": "Levelle",
+    "short_name": "Levelle",
+    "description": "Automagically level reading books",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f7f3ea",
+    "theme_color": "#2f5d50",
+    "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

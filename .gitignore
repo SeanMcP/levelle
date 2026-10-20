@@ -1,5 +1,5 @@
 node_modules/
-
-# Parcel
 dist/
-.cache/
+
+# Copied from node_modules by scripts/copy-ocr-assets.js
+public/ocr/
