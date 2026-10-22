@@ -111,6 +111,34 @@ loves" (for "into the other loves"), "fiend" ×2 (for "friend") and "expect"
 (for "except"). Its one real error at the start is "door" for "floor" in the
 steeply curled first line.
 
+### Second book: left- vs right-hand pages
+
+Four more local-only photos are of a modernized (so still copyrighted)
+edition of *The Sum of Saving Knowledge*. `scan-l-*` are left-hand pages and
+`scan-r-*` right-hand pages. They are transcribed by Claude from the photos,
+not checked by hand.
+
+| Variant | l-1 | l-2 | r-1 | r-2 |
+|---|---|---|---|---|
+| Raw photo, Tesseract defaults (psm 3) | 94% | 67% | 21% | 12% |
+| Corners + perspective + lighting | 50% | 41% | 7% | 6% |
+| **+ dewarp (current app)** | **4%** | **5%** | **2%** | **0%** |
+
+- **Left-hand pages are harder.** Their spine is on the right, where lines end,
+  and curl pushes line ends past a straight corner-to-corner edge. With the
+  first corners placed tight to the text, the top and bottom lines were
+  clipped (11% word error rate). Loosening them gave 4–5%. Placing corners
+  with room to spare matters more on left-hand pages.
+- **Text near the spine is squeezed horizontally,** because the page turns away
+  from the camera. Dewarping only shifts lines vertically, so the last word or
+  two of a line comes out narrow, and Tesseract reads fragments: "enough" →
+  "eno", "Spirit" → "spi", "will" → "wi". Most remaining errors on left-hand
+  pages are of this kind. A horizontal stretch toward the spine is the next
+  step, e.g. estimating it from how line ends compress.
+- **Thumbs:** with the `<FINGER>` convention, partial words beside a thumb
+  that the OCR does read ("ro", "thoug") count as junk. It's a small
+  penalty, the same for every variant.
+
 ### Takeaways
 
 - **Page curl is the main failure on real photos.** Even after perspective
@@ -211,6 +239,8 @@ Other findings from that phase:
 
 - **Auto-detect the text block or page corners** and start the handles there.
   Untouched default corners are now the biggest source of error (14–24%).
+- **Squeezed text at the spine:** stretch line ends horizontally (see the
+  second-book results).
 - **Steeper curl:** the first lines of scans 2 and 4 still fail. Possible fixes:
   - more strips near the spine;
   - fitting a smooth curve to each line, not piecewise shifts.
